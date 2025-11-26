@@ -1,0 +1,25 @@
+{
+  "name": "syncio",
+  "version": "1.0.0",
+  "description": "Syncio monorepo - Laravel backend and Vue.js frontend",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -c \"#93c5fd,#c4b5fd\" --names \"backend,frontend\" --kill-others-on-fail \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "dev:backend": "cd syncio-test-be && php artisan serve",
+    "dev:frontend": "cd syncio-test-fe && pnpm run dev",
+    "install:all": "pnpm run install:backend && pnpm run install:frontend",
+    "install:backend": "cd syncio-test-be && composer install && pnpm install",
+    "install:frontend": "cd syncio-test-fe && pnpm install",
+    "build": "pnpm run build:backend && pnpm run build:frontend",
+    "build:backend": "cd syncio-test-be && pnpm run build",
+    "build:frontend": "cd syncio-test-fe && pnpm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0",
+    "php": "^8.2"
+  }
+}
+
