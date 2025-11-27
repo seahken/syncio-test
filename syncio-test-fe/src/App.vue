@@ -9,6 +9,7 @@ import HelloWorld from './components/HelloWorld.vue'
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/compare">Compare</RouterLink>
+        <RouterLink to="/product">Product</RouterLink>
       </nav>
     </div>
   </header>
@@ -40,7 +41,8 @@ nav a.router-link-exact-active:hover {
 
 nav a {
   display: inline-block;
-  padding: 0 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   border-left: 1px solid var(--color-border);
 }
 
