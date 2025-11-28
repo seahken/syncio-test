@@ -31,6 +31,13 @@
         </aside>
 
         <div class="product-view__main">
+          <ais-state-results class="product-view__loading">
+            <template v-slot="{ status }">
+              <LoadingSpinner v-if="status === 'loading' || status === 'stalled'"
+              class="product-view__loading-spinner" 
+              />
+            </template>              
+          </ais-state-results>
           <ais-stats />
           <ais-hits>
             <template #item="{ item }">
@@ -54,8 +61,17 @@
 </template>
 
 <script setup lang="ts">
-import { AisInstantSearch, AisSearchBox, AisRefinementList, AisHits, AisStats, AisPagination } from 'vue-instantsearch/vue3/es'
+import { 
+  AisInstantSearch, 
+  AisSearchBox, 
+  AisRefinementList, 
+  AisHits, 
+  AisStats, 
+  AisPagination, 
+  AisStateResults 
+} from 'vue-instantsearch/vue3/es'
 import { searchClient, PRODUCTS_INDEX } from '@/services/algolia'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 console.log('searchClient', searchClient)
 
@@ -77,11 +93,99 @@ const indexName = PRODUCTS_INDEX
   margin-bottom: 1.5rem;
   color: var(--color-heading);
   font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
 }
 
 .product-view__search {
   width: 100%;
   max-width: 600px;
+  position: relative;
+}
+
+.product-view__search :deep(.ais-SearchBox) {
+  position: relative;
+}
+
+.product-view__search :deep(.ais-SearchBox-form) {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.product-view__search :deep(.ais-SearchBox-input) {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 2.75rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: all 0.2s ease;
+  font-weight: 400;
+}
+
+.product-view__search :deep(.ais-SearchBox-input::placeholder) {
+  color: var(--color-text);
+  opacity: 0.5;
+}
+
+.product-view__search :deep(.ais-SearchBox-input:focus) {
+  outline: none;
+  border-color: hsla(160, 100%, 37%, 0.5);
+  box-shadow: 0 0 0 3px hsla(160, 100%, 37%, 0.1);
+}
+
+.product-view__search :deep(.ais-SearchBox-submit),
+.product-view__search :deep(.ais-SearchBox-reset) {
+  position: absolute;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.product-view__search :deep(.ais-SearchBox-submit) {
+  left: 0.75rem;
+}
+
+.product-view__search :deep(.ais-SearchBox-reset) {
+  right: 0.75rem;
+}
+
+.product-view__search :deep(.ais-SearchBox-submit:hover),
+.product-view__search :deep(.ais-SearchBox-reset:hover) {
+  opacity: 1;
+}
+
+.product-view__search :deep(.ais-SearchBox-submit svg),
+.product-view__search :deep(.ais-SearchBox-reset svg) {
+  width: 18px;
+  height: 18px;
+}
+
+.product-view__loading {  
+  position: absolute;
+  height: 300px;
+  width: 100%;
+}
+
+.product-view__loading :deep(p),
+.product-view__loading :deep(pre) {
+  display: none;
+}
+
+.product-view__loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .product-view__content {
@@ -97,72 +201,141 @@ const indexName = PRODUCTS_INDEX
 }
 
 .product-view__filters {
-  background: var(--color-background-soft);
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
+  background: transparent;
+  padding: 0;
+  margin-bottom: 2rem;
+  border: none;
+}
+
+.product-view__filters:last-child {
+  margin-bottom: 0;
 }
 
 .product-view__filters h2 {
-  font-size: 1.2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   margin-bottom: 1rem;
   color: var(--color-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+.product-view__filters :deep(.ais-RefinementList) {
+  margin-top: 0.5rem;
+}
+
+.product-view__filters :deep(.ais-RefinementList-list) {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.product-view__filters :deep(.ais-RefinementList-item) {
+  margin: 0;
+}
+
+.product-view__filters :deep(.ais-RefinementList-label) {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  user-select: none;
+}
+
+.product-view__filters :deep(.ais-RefinementList-label:hover) {
+  background-color: var(--color-background-mute);
+}
+
+.product-view__filters :deep(.ais-RefinementList-item--selected .ais-RefinementList-label) {
+  background-color: hsla(160, 100%, 37%, 0.1);
+  color: hsla(160, 100%, 37%, 1);
+  font-weight: 500;
+}
+
+.product-view__filters :deep(.ais-RefinementList-checkbox) {
+  margin-right: 0.75rem;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+}
+
+.product-view__filters :deep(.ais-RefinementList-checkbox:checked) {
+  background-color: hsla(160, 100%, 37%, 1);
+  border-color: hsla(160, 100%, 37%, 1);
+}
+
+.product-view__filters :deep(.ais-RefinementList-checkbox:checked::after) {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.product-view__filters :deep(.ais-RefinementList-item--selected .ais-RefinementList-checkbox) {
+  background-color: hsla(160, 100%, 37%, 1);
+  border-color: hsla(160, 100%, 37%, 1);
+}
+
+.product-view__filters :deep(.ais-RefinementList-count) {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  opacity: 0.6;
+  padding-left: 0.5rem;
+}
+
+.product-view__filters :deep(.ais-RefinementList-item--selected .ais-RefinementList-count) {
+  opacity: 0.8;
+}
+
+.product-view__filters :deep(.ais-RefinementList-showMore) {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: hsla(160, 100%, 37%, 1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.2s;
+}
+
+.product-view__filters :deep(.ais-RefinementList-showMore:hover) {
+  opacity: 0.7;
 }
 
 .product-view__main {
   min-height: 400px;
+  position: relative;
 }
 
 .product-view__main :deep(.ais-Stats) {
   margin-bottom: 1.5rem;
   color: var(--color-text);
-  font-size: 0.9rem;
-}
-
-.product-view__main :deep(.ais-SearchBox) {
-  margin-bottom: 1.5rem;
-}
-
-.product-view__main :deep(.ais-SearchBox-input) {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-background);
-  color: var(--color-text);
-}
-
-.product-view__main :deep(.ais-SearchBox-input:focus) {
-  outline: none;
-  border-color: hsla(160, 100%, 37%, 1);
-}
-
-.product-view__main :deep(.ais-RefinementList-list) {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.product-view__main :deep(.ais-RefinementList-item) {
-  margin-bottom: 0.5rem;
-}
-
-.product-view__main :deep(.ais-RefinementList-label) {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.product-view__main :deep(.ais-RefinementList-label:hover) {
-  background-color: var(--color-background-mute);
-}
-
-.product-view__main :deep(.ais-RefinementList-checkbox) {
-  margin-right: 0.5rem;
+  font-size: 0.875rem;
+  opacity: 0.7;
+  font-weight: 400;
 }
 
 .product-view__main :deep(.ais-Hits-list) {
