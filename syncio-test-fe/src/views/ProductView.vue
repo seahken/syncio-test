@@ -42,13 +42,31 @@
           <ais-hits>
             <template #item="{ item }">
               <div class="product-card">
-                <div class="product-card__image" v-if="item.images.length > 0">
-                  <img :src="item.images[0]" :alt="item.title" />
+                <div class="product-card__image" v-if="item.showcase_image">
+                  <img :src="item.showcase_image" :alt="item.title" />
                 </div>
                 <div class="product-card__content">
                   <h3 class="product-card__title">{{ item.title }}</h3>
                   <p class="product-card__description" v-html="item.description" />
-                  <p class="product-card__price">${{ item.price }}</p>
+                  <div v-if="item.color?.length || item.product_type" class="product-card__variants">
+                    <span 
+                      v-for="(color, index) in item.color" 
+                      :key="`color-${index}`"
+                      class="variant-tag variant-tag--color"
+                    >
+                      {{ color }}
+                    </span>
+                    <span 
+                      v-if="item.product_type"
+                      class="variant-tag variant-tag--type"
+                    >
+                      {{ item.product_type }}
+                    </span>
+                  </div>
+                  <div class="product-card__price-container">
+                    <p class="product-card__price">${{ item.price }}</p>
+                    <button @click="openModal(item)" class="product-card__see-more">See more</button>
+                  </div>
                 </div>
               </div>
             </template>
@@ -57,10 +75,13 @@
         </div>
       </div>
     </ais-instant-search>
+
+    <ProductModal :is-open="isModalOpen" :product="selectedProduct" @close="closeModal" />
   </main>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { 
   AisInstantSearch, 
   AisSearchBox, 
@@ -72,10 +93,27 @@ import {
 } from 'vue-instantsearch/vue3/es'
 import { searchClient, PRODUCTS_INDEX } from '@/services/algolia'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ProductModal from '@/components/ProductModal.vue'
 
 console.log('searchClient', searchClient)
 
 const indexName = PRODUCTS_INDEX
+
+const isModalOpen = ref(false)
+const selectedProduct = ref<any>(null)
+
+const openModal = (product: any) => {
+  selectedProduct.value = product
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  // Clear product after animation completes
+  setTimeout(() => {
+    selectedProduct.value = null
+  }, 300)
+}
 </script>
 
 <style scoped>
@@ -392,11 +430,6 @@ const indexName = PRODUCTS_INDEX
   height: 100%;
 }
 
-.product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
 .product-card__image {
   width: 100%;
   height: 200px;
@@ -427,13 +460,42 @@ const indexName = PRODUCTS_INDEX
 .product-card__description {
   font-size: 0.9rem;
   color: var(--color-text);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.product-card__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.variant-tag {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 4px;
+  text-transform: capitalize;
+  line-height: 1.4;
+}
+
+.variant-tag--color {
+  background: var(--color-background-mute);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.variant-tag--type {
+  background: hsla(160, 100%, 37%, 0.1);
+  border: 1px solid hsla(160, 100%, 37%, 0.3);
+  color: hsla(160, 100%, 37%, 1);
 }
 
 .product-card__meta {
@@ -449,6 +511,7 @@ const indexName = PRODUCTS_INDEX
   font-size: 1.2rem;
   font-weight: 600;
   color: hsla(160, 100%, 37%, 1);
+  margin-top: auto;
 }
 
 .product-card__category {
@@ -458,6 +521,30 @@ const indexName = PRODUCTS_INDEX
   padding: 0.25rem 0.5rem;
   background: var(--color-background-mute);
   border-radius: 4px;
+}
+
+.product-card__price-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-card__see-more {
+  background: hsla(160, 100%, 37%, 0.1);
+  border: 1px solid hsla(160, 100%, 37%, 0.3);
+  color: hsla(160, 100%, 37%, 1);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  transition: all 0.2s;
+
+}
+.product-card__see-more:hover {
+  background: hsla(160, 100%, 37%, 0.2);
+  border-color: hsla(160, 100%, 37%, 0.5);
+  color: hsla(160, 100%, 37%, 1);
 }
 
 @media (max-width: 768px) {
