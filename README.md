@@ -61,14 +61,26 @@ cd syncio-test-be
    php artisan key:generate
    ```
 
-3. Configure your database settings in the `.env` file:
+3. Configure your environment variables in the `syncio-test-be/.env` file. The `.env.example` file includes default values. Key settings to configure:
+
+   **Database Configuration** (default uses SQLite):
    ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=your_database_name
-   DB_USERNAME=your_database_user
-   DB_PASSWORD=your_database_password
+   DB_CONNECTION=sqlite
+   # Or for MySQL:
+   # DB_CONNECTION=mysql
+   # DB_HOST=127.0.0.1
+   # DB_PORT=3306
+   # DB_DATABASE=your_database_name
+   # DB_USERNAME=your_database_user
+   # DB_PASSWORD=your_database_password
+   ```
+
+   **Application Settings**:
+   ```env
+   APP_NAME=Laravel
+   APP_ENV=local
+   APP_DEBUG=true
+   APP_URL=http://localhost
    ```
 
 #### Database Migration
@@ -79,12 +91,6 @@ Run the database migrations:
 php artisan migrate
 ```
 
-If you need to seed the database:
-
-```bash
-php artisan db:seed
-```
-
 ### 3. Frontend Setup (Vue.js)
 
 The frontend dependencies should already be installed from step 1. If you need to install them separately:
@@ -93,6 +99,26 @@ The frontend dependencies should already be installed from step 1. If you need t
 cd syncio-test-fe
 pnpm install
 ```
+
+#### Environment Configuration
+
+1. Copy the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Configure your environment variables in the `syncio-test-fe/.env` file:
+   ```env
+   # Algolia Search Configuration
+   VITE_ALGOLIA_APP_ID=your_algolia_app_id
+   VITE_ALGOLIA_API_KEY=your_algolia_api_key
+   VITE_ALGOLIA_INDEX_NAME=your_index_name
+
+   # Backend API URL (optional, defaults to http://localhost:8000/api)
+   VITE_API_BASE_URL=http://localhost:8000/api
+   ```
+
+   **Note**: The frontend uses Vite, so all environment variables must be prefixed with `VITE_` to be accessible in the application.
 
 ## Running the Application
 
@@ -136,24 +162,6 @@ cd syncio-test-fe
 pnpm run dev
 ```
 
-## Building for Production
-
-Build both projects:
-
-```bash
-pnpm run build
-```
-
-Or build individually:
-
-```bash
-# Build backend
-pnpm run build:backend
-
-# Build frontend
-pnpm run build:frontend
-```
-
 ## Development
 
 ### Backend (Laravel)
@@ -163,28 +171,6 @@ pnpm run build:frontend
 - **Controllers**: `syncio-test-be/app/Http/Controllers/`
 - **Models**: `syncio-test-be/app/Models/`
 - **Migrations**: `syncio-test-be/database/migrations/`
-
-#### Useful Laravel Commands
-
-```bash
-# Create a new migration
-php artisan make:migration create_table_name
-
-# Create a new controller
-php artisan make:controller ControllerName
-
-# Create a new model
-php artisan make:model ModelName
-
-# Run tests
-php artisan test
-
-# Clear cache
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-```
 
 ### Frontend (Vue.js)
 
@@ -212,7 +198,42 @@ pnpm run format
 pnpm run preview
 ```
 
+## Environment Variables
+
+Both projects require environment configuration files:
+
+### Backend Environment Variables (`syncio-test-be/.env`)
+
+The backend uses Laravel's standard `.env` file. Copy `.env.example` to `.env` and configure:
+
+- **Database**: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+- **Application**: `APP_NAME`, `APP_ENV`, `APP_KEY`, `APP_DEBUG`, `APP_URL`
+- **Cache/Session**: `CACHE_STORE`, `SESSION_DRIVER`, `QUEUE_CONNECTION`
+
+See the `.env.example` file in `syncio-test-be/` for all available options.
+
+### Frontend Environment Variables (`syncio-test-fe/.env`)
+
+The frontend uses Vite, so all environment variables must be prefixed with `VITE_`:
+
+- **Algolia Search**: `VITE_ALGOLIA_APP_ID`, `VITE_ALGOLIA_API_KEY`, `VITE_ALGOLIA_INDEX_NAME`
+- **API Configuration**: `VITE_API_BASE_URL` (defaults to `http://localhost:8000/api`)
+
+**Important**: After updating environment variables in the frontend, restart the development server for changes to take effect.
+
 ## Troubleshooting
+
+### Environment Variables Not Working
+
+**Frontend**: 
+- Ensure all variables are prefixed with `VITE_`
+- Restart the development server after changing `.env` file
+- Check that `.env` file exists in `syncio-test-fe/` directory
+
+**Backend**:
+- Ensure `.env` file exists (copy from `.env.example` if missing)
+- Run `php artisan config:clear` after changing environment variables
+- Verify `APP_KEY` is set (run `php artisan key:generate` if needed)
 
 ### Port Already in Use
 
