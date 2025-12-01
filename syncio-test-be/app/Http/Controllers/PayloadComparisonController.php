@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class PayloadComparisonController extends Controller
 {
     /**
+     * Cache TTL in hours
+     */
+    private const CACHE_TTL_HOURS = 24;
+
+    /**
      * Handle payload comparison endpoint
-     * First request: stores payload in cache file
+     * First request: stores payload in cache
      * Second request: compares with cached payload and returns diff
      */
     public function compare(Request $request): JsonResponse
@@ -26,42 +31,51 @@ class PayloadComparisonController extends Controller
         }
 
         $cacheKey = 'payload_' . $payload['id'];
-        $cacheFile = storage_path('app/cache/' . $cacheKey . '.json');
-
-        // Ensure cache directory exists
-        $cacheDir = storage_path('app/cache');
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
-        }
 
         // Check if cached payload exists
-        if (file_exists($cacheFile)) {
+        $cachedPayload = Cache::get($cacheKey);
+
+        if ($cachedPayload !== null) {
             // Second request: compare and return diff
-            $cachedPayload = json_decode(file_get_contents($cacheFile), true);
-            
-            if ($cachedPayload === null) {
+            try {
+                $diff = $this->calculateDiff($cachedPayload, $payload);
+                
+                // Update cache with new payload
+                Cache::put($cacheKey, $payload, now()->addHours(self::CACHE_TTL_HOURS));
+                
                 return response()->json([
-                    'error' => 'Failed to decode cached payload'
+                    'status' => 'comparison',
+                    'diff' => $diff
+                ], 200);
+            } catch (\Exception $e) {
+                Log::error('Failed to calculate diff', [
+                    'error' => $e->getMessage(),
+                    'payload_id' => $payload['id']
+                ]);
+                
+                return response()->json([
+                    'error' => 'Failed to process payload comparison'
                 ], 500);
             }
-
-            $diff = $this->calculateDiff($cachedPayload, $payload);
-            
-            // Update cache with new payload
-            file_put_contents($cacheFile, json_encode($payload, JSON_PRETTY_PRINT));
-            
-            return response()->json([
-                'status' => 'comparison',
-                'diff' => $diff
-            ], 200);
         } else {
             // First request: store payload in cache
-            file_put_contents($cacheFile, json_encode($payload, JSON_PRETTY_PRINT));
-            
-            return response()->json([
-                'status' => 'cached',
-                'message' => 'Payload cached successfully. Send second payload to get comparison.'
-            ], 200);
+            try {
+                Cache::put($cacheKey, $payload, now()->addHours(self::CACHE_TTL_HOURS));
+                
+                return response()->json([
+                    'status' => 'cached',
+                    'message' => 'Payload cached successfully. Send second payload to get comparison.'
+                ], 200);
+            } catch (\Exception $e) {
+                Log::error('Failed to cache payload', [
+                    'error' => $e->getMessage(),
+                    'payload_id' => $payload['id']
+                ]);
+                
+                return response()->json([
+                    'error' => 'Failed to cache payload'
+                ], 500);
+            }
         }
     }
 

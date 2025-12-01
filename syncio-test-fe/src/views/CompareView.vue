@@ -7,6 +7,8 @@ import { payload1, payload2 } from '../data'
 
 const payload1Sent = ref(false)
 const payload2Sent = ref(false)
+const payload1Content = ref<string>(JSON.stringify(payload1, null, 2))
+const payload2Content = ref<string>(JSON.stringify(payload2, null, 2))
 const payload1Confirmation = ref<string>('')
 const payload2Confirmation = ref<string>('')
 const comparisonResult = ref<PayloadDiff | null>(null)
@@ -30,7 +32,7 @@ const sendPayload1 = async () => {
   try {
     // Add delay to see loading animation better
     await delay(1500)
-    const response = await sendPayload(payload1)
+    const response = await sendPayload(JSON.parse(payload1Content.value))
     payload1Sent.value = true
     payload1Confirmation.value = response.message || 'Payload 1 sent successfully!'
     
@@ -83,7 +85,7 @@ const sendPayload2 = async () => {
   try {
     // Add delay to see loading animation better
     await delay(1500)
-    const response = await sendPayload(payload2)
+    const response = await sendPayload(JSON.parse(payload2Content.value))
     payload2Sent.value = true
     payload2Confirmation.value = 'Payload 2 sent successfully!'
     
@@ -151,6 +153,15 @@ onUnmounted(() => {
       >
         Reset
       </button>
+    </div>
+
+    <div class="compare-view__content">
+      <h2>Payload 1</h2>
+      <textarea v-model="payload1Content" class="compare-view__textarea"></textarea>
+    </div>
+    <div class="compare-view__content"> 
+      <h2>Payload 2</h2>
+      <textarea v-model="payload2Content" class="compare-view__textarea"></textarea>
     </div>
 
     <LoadingSpinner 
